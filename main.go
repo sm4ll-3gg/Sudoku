@@ -8,7 +8,7 @@ import (
 
 func main() {
 	var field Field
-	field.Init(examples.Simpliest)
+	field.Init(examples.Medium)
 
 	fmt.Printf("\n")
 	fmt.Println(field.String())
