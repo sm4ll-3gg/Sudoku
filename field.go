@@ -15,40 +15,25 @@ func (f *Field) Init(data [9][9]uint8) {
 }
 
 func (f *Field) FindSolution() error {
-	unexpected := func() error {
-		return errors.New(f.String())
-	}
-
-	ok := f.makePrediction()
-	if !ok {
-		return unexpected()
-	}
-
+	f.makePrediction()
 	f.trySetValues()
 
 	if !f.controller() {
-		return unexpected()
+		return errors.New(f.String())
 	}
 
 	return nil
 }
 
-func (f *Field) makePrediction() bool {
-	ok := f.forEach(func(c *Cell, i, j int) bool {
+func (f *Field) makePrediction() {
+	f.forEach(func(c *Cell, i, j int) bool {
 		if !c.Empty() {
 			return true
 		}
 
-		p, ok := f.predictor(i, j)
-		if !ok {
-			return false
-		}
-
-		c.SetPrediction(p)
+		c.SetPrediction(f.predictor(i, j))
 		return true
 	})
-
-	return ok
 }
 
 func (f *Field) trySetValues() {

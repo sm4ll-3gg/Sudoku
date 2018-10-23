@@ -58,6 +58,20 @@ func (f *Field) forEachInSector(i, j int, foo ForEachFunc) (ok bool) {
 	return true
 }
 
+func (f *Field) forEachMatters(i, j int, foo ForEachFunc) (ok bool) {
+	ok = f.forEachInRow(i, foo)
+	if !ok {
+		return false
+	}
+
+	ok = f.forEachInColumn(j, foo)
+	if !ok {
+		return false
+	}
+
+	return f.forEachInSector(i, j, foo)
+}
+
 func (f Field) String() string {
 	builder := strings.Builder{}
 

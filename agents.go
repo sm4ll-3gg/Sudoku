@@ -1,96 +1,52 @@
 package main
 
-func (f Field) predictor(i, j int) (Set, bool) {
-	predict, ok := f.rowObserver(i)
-	if !ok {
-		return nil, false
-	}
-
-	other, ok := f.columnObserver(j)
-	if !ok {
-		return nil, false
-	}
-
-	predict = predict.Or(other)
-
-	other, ok = f.sectorObserver(i, j)
-	if !ok {
-		return nil, false
-	}
-
-	return predict.Or(other).Not(), true
-}
-
-func observer(c *Cell, has Set) (ok bool) {
-	val := c.Value()
-	switch _, ok := has[val]; {
-	case ok:
-		return false
-	case !c.Empty():
-		has.Append(val)
-	}
-
-	return true
-}
-
-func (f Field) rowObserver(i int) (Set, bool) {
+func (f Field) predictor(i, j int) Set {
 	has := make(Set, 9)
+	f.forEachMatters(i, j, func(c *Cell, _, _ int) bool {
+		if !c.Empty() {
+			has.Append(c.Value())
+		}
 
-	ok := f.forEachInRow(i, func(c *Cell, _, _ int) bool {
-		return observer(c, has)
+		return true
 	})
 
-	if !ok {
-		return nil, false
-	}
-
-	return has, true
-}
-
-func (f Field) columnObserver(j int) (Set, bool) {
-	has := make(Set, 9)
-
-	ok := f.forEachInColumn(j, func(c *Cell, _, _ int) bool {
-		return observer(c, has)
-	})
-
-	if !ok {
-		return nil, false
-	}
-
-	return has, true
-}
-
-func (f Field) sectorObserver(i, j int) (Set, bool) {
-	has := make(Set, 9)
-
-	ok := f.forEachInSector(i, j, func(c *Cell, _, _ int) bool {
-		return observer(c, has)
-	})
-
-	if !ok {
-		return nil, false
-	}
-
-	return has, true
+	return has.Not()
 }
 
 func (f Field) controller() bool {
+	has := make(Set, 9)
+	add := func(c *Cell, _, _ int) bool {
+		switch {
+		case c.Empty():
+			return true
+		case has.Contains(c.Value()):
+			return false
+		default:
+			has.Append(c.Value())
+		}
+
+		return true
+	}
+
 	for i := range f.field {
-		if _, ok := f.rowObserver(i); !ok {
+		if !f.forEachInRow(i, add) {
 			return false
 		}
 	}
 
+	has.Clear()
+
 	for j := range f.field[0] {
-		if _, ok := f.columnObserver(j); !ok {
+		if !f.forEachInColumn(j, add) {
 			return false
 		}
 	}
+
+	has.Clear()
 
 	for i := 0; i < 9; i += 3 {
 		for j := 0; j < 9; j += 3 {
-			if _, ok := f.sectorObserver(i, j); !ok {
+			if !f.forEachInSector(i, j, add) {
 				return false
 			}
 		}
