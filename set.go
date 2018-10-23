@@ -1,5 +1,11 @@
 package main
 
+import (
+	"sort"
+	"strconv"
+	"strings"
+)
+
 var full = Set{
 	1: {},
 	2: {},
@@ -13,8 +19,6 @@ var full = Set{
 }
 
 type Set map[uint8]struct{}
-
-var EmptySet = Set(nil)
 
 func (s Set) Append(value uint8) {
 	s[value] = struct{}{}
@@ -44,4 +48,15 @@ func (s Set) Not() Set {
 	}
 
 	return res
+}
+
+func (s Set) Hash() string {
+	keys := make([]string, 0, len(s))
+	for key := range s {
+		keys = append(keys, strconv.Itoa(int(key)))
+	}
+
+	sort.Strings(keys)
+
+	return strings.Join(keys, ",")
 }

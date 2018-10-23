@@ -3,36 +3,45 @@ package main
 func (f Field) predictor(i, j int) (Set, bool) {
 	predict, ok := f.rowObserver(i)
 	if !ok {
-		return EmptySet, false
+		return nil, false
 	}
 
 	other, ok := f.columnObserver(j)
 	if !ok {
-		return EmptySet, false
+		return nil, false
 	}
 
 	predict = predict.Or(other)
 
 	other, ok = f.sectorObserver(i, j)
 	if !ok {
-		return EmptySet, false
+		return nil, false
 	}
 
 	return predict.Or(other).Not(), true
 }
 
+func observer(c *Cell, has Set) (ok bool) {
+	val := c.Value()
+	switch _, ok := has[val]; {
+	case ok:
+		return false
+	case !c.Empty():
+		has.Append(val)
+	}
+
+	return true
+}
+
 func (f Field) rowObserver(i int) (Set, bool) {
 	has := make(Set, 9)
 
-	row := f.field[i]
-	for j := range row {
-		val := row[j].Value()
-		switch _, ok := has[val]; {
-		case ok:
-			return EmptySet, false
-		case !row[j].Empty():
-			has.Append(val)
-		}
+	ok := f.forEachInRow(i, func(c *Cell, _, _ int) bool {
+		return observer(c, has)
+	})
+
+	if !ok {
+		return nil, false
 	}
 
 	return has, true
@@ -41,14 +50,12 @@ func (f Field) rowObserver(i int) (Set, bool) {
 func (f Field) columnObserver(j int) (Set, bool) {
 	has := make(Set, 9)
 
-	for _, row := range f.field {
-		val := row[j].Value()
-		switch _, ok := has[val]; {
-		case ok:
-			return EmptySet, false
-		case !row[j].Empty():
-			has.Append(val)
-		}
+	ok := f.forEachInColumn(j, func(c *Cell, _, _ int) bool {
+		return observer(c, has)
+	})
+
+	if !ok {
+		return nil, false
 	}
 
 	return has, true
@@ -58,19 +65,11 @@ func (f Field) sectorObserver(i, j int) (Set, bool) {
 	has := make(Set, 9)
 
 	ok := f.forEachInSector(i, j, func(c *Cell, _, _ int) bool {
-		val := c.Value()
-		switch _, ok := has[val]; {
-		case ok:
-			return false
-		case !c.Empty():
-			has.Append(val)
-		}
-
-		return true
+		return observer(c, has)
 	})
 
 	if !ok {
-		return EmptySet, false
+		return nil, false
 	}
 
 	return has, true
