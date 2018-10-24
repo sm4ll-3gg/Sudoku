@@ -1,6 +1,8 @@
 package main
 
-import "errors"
+import (
+	"errors"
+)
 
 type Field struct {
 	field [9][9]Cell
@@ -17,6 +19,10 @@ func (f *Field) Init(data [9][9]uint8) {
 func (f *Field) FindSolution() error {
 	f.makePrediction()
 	f.trySetValues()
+
+	if err := f.resolveDoubles(); err != nil {
+		return err
+	}
 
 	if !f.controller() {
 		return errors.New(f.String())
@@ -53,6 +59,19 @@ func (f *Field) trySetValues() {
 
 		return true
 	})
+}
+
+func (f *Field) resolveDoubles() (err error) {
+	f.forEach(func(c *Cell, i, j int) bool {
+		if !c.Empty() {
+			return true
+		}
+
+		err = f.minimalist(c, i, j)
+		return err == nil
+	})
+
+	return err
 }
 
 func (f *Field) updatePredictions(i, j int, value uint8) {
