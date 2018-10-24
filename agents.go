@@ -56,13 +56,40 @@ func (f *Field) minimalist(c *Cell, i, j int) error {
 		}
 
 		for val := range p {
-			c.SetValue(val)
+			f.setCellValue(c, i, j, val)
 		}
 
 		return true
 	})
 
 	return nil
+}
+
+func (f *Field) researcher(c *Cell, i, j int) {
+	prediction := c.Prediction()
+
+	counts := make(map[uint8]uint8, len(prediction))
+	f.forEachMatters(i, j, func(c *Cell, ci, cj int) bool {
+		if !c.Empty() || (ci == i && cj == j) {
+			return true
+		}
+
+		curr := c.Prediction()
+		for key := range prediction {
+			if curr.Contains(key) {
+				counts[key]++
+			}
+		}
+
+		return len(counts) < len(prediction)
+	})
+
+	for key, count := range counts {
+		if count == 1 {
+			f.setCellValue(c, i, j, key)
+			break
+		}
+	}
 }
 
 func (f Field) controller() bool {

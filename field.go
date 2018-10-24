@@ -1,8 +1,6 @@
 package main
 
-import (
-	"errors"
-)
+import "errors"
 
 type Field struct {
 	field [9][9]Cell
@@ -24,11 +22,22 @@ func (f *Field) FindSolution() error {
 		return err
 	}
 
+	f.findUniquePredictions()
+
 	if !f.controller() {
 		return errors.New(f.String())
 	}
 
 	return nil
+}
+
+func (f *Field) setCellValue(c *Cell, i, j int, value uint8) {
+	c.SetValue(value)
+
+	f.forEachMatters(i, j, func(c *Cell, _, _ int) bool {
+		c.EraseFromPrediction(value)
+		return true
+	})
 }
 
 func (f *Field) makePrediction() {
@@ -54,7 +63,7 @@ func (f *Field) trySetValues() {
 			value = v
 		}
 
-		c.SetValue(value)
+		f.setCellValue(c, i, j, value)
 		f.updatePredictions(i, j, value)
 
 		return true
@@ -72,6 +81,17 @@ func (f *Field) resolveDoubles() (err error) {
 	})
 
 	return err
+}
+
+func (f *Field) findUniquePredictions() {
+	f.forEach(func(c *Cell, i, j int) bool {
+		if !c.Empty() {
+			return true
+		}
+
+		f.researcher(c, i, j)
+		return true
+	})
 }
 
 func (f *Field) updatePredictions(i, j int, value uint8) {
@@ -104,6 +124,6 @@ func (f *Field) updatePrediction(c *Cell, i, j int, value uint8) {
 		val = v
 	}
 
-	c.SetValue(val)
+	f.setCellValue(c, i, j, val)
 	f.updatePredictions(i, j, val)
 }
