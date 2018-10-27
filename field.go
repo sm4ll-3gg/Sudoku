@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 )
 
@@ -65,7 +64,6 @@ func (f *Field) FindSolution() error {
 }
 
 func (f *Field) setCellValue(c *Cell, i, j int, value uint8) {
-	fmt.Printf("set [%d, %d] %d\n", i, j, value)
 	c.SetValue(value)
 	f.filled++
 
@@ -146,7 +144,6 @@ func (f *Field) resolveDoubles() (err error) {
 		}
 
 		err = f.minimalist(c, i, j, f.forEachInSector)
-		fmt.Println("----------------")
 		return err == nil
 	})
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 )
 
 func (f Field) predictor(i, j int) Set {
@@ -51,10 +50,7 @@ func (f *Field) minimalist(c *Cell, i, j int, forEach ForEachFunc) error {
 
 		p := c.Prediction()
 		for key := range prediction {
-			if p.Contains(key) {
-				fmt.Printf("[%d, %d] %d\n", i, j, key)
-				p.Erase(key)
-			}
+			p.Erase(key)
 		}
 
 		if len(p) != 1 {
