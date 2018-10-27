@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 )
 
 func (f Field) predictor(i, j int) Set {
@@ -17,7 +18,7 @@ func (f Field) predictor(i, j int) Set {
 	return has.Not()
 }
 
-func (f *Field) minimalist(c *Cell, i, j int) error {
+func (f *Field) minimalist(c *Cell, i, j int, forEach func(int, int, ForEachFunc) bool) error {
 	prediction := c.Prediction()
 
 	hash := func(i, j int) uint8 {
@@ -25,7 +26,11 @@ func (f *Field) minimalist(c *Cell, i, j int) error {
 	}
 
 	equal := make(Set)
-	f.forEachMatters(i, j, func(c *Cell, i, j int) bool {
+	forEach(i, j, func(c *Cell, i, j int) bool {
+		if !c.Empty() {
+			return true
+		}
+
 		if prediction.Equal(c.Prediction()) {
 			equal.Append(hash(i, j))
 		}
@@ -39,26 +44,25 @@ func (f *Field) minimalist(c *Cell, i, j int) error {
 		return nil
 	}
 
-	f.forEachMatters(i, j, func(c *Cell, i, j int) bool {
+	forEach(i, j, func(c *Cell, i, j int) bool {
 		if equal.Contains(hash(i, j)) {
 			return true
-		} else if !prediction.Equal(c.Prediction()) {
-			return true
-		}
-
-		for key := range prediction {
-			c.EraseFromPrediction(key)
 		}
 
 		p := c.Prediction()
+		for key := range prediction {
+			if p.Contains(key) {
+				fmt.Printf("[%d, %d] %d\n", i, j, key)
+				p.Erase(key)
+			}
+		}
+
 		if len(p) != 1 {
+			c.SetPrediction(p)
 			return true
 		}
 
-		for val := range p {
-			f.setCellValue(c, i, j, val)
-		}
-
+		f.setCellValue(c, i, j, p.First())
 		return true
 	})
 
@@ -108,7 +112,7 @@ func (f Field) controller() bool {
 	}
 
 	for i := range f.field {
-		if !f.forEachInRow(i, add) {
+		if !f.forEachInRow(i, 0, add) {
 			return false
 		}
 
@@ -116,7 +120,7 @@ func (f Field) controller() bool {
 	}
 
 	for j := range f.field[0] {
-		if !f.forEachInColumn(j, add) {
+		if !f.forEachInColumn(0, j, add) {
 			return false
 		}
 

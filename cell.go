@@ -32,7 +32,3 @@ func (c Cell) Prediction() Set {
 func (c *Cell) SetPrediction(p Set) {
 	c.prediction = p
 }
-
-func (c *Cell) EraseFromPrediction(val uint8) {
-	delete(c.prediction, val)
-}

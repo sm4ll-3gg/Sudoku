@@ -8,12 +8,13 @@ import (
 
 func main() {
 	var field Field
-	field.Init(examples.Easy)
+	field.Init(examples.Medium)
 	err := field.FindSolution()
-	if err != nil {
-		panic(err)
-	}
 
 	fmt.Printf("\n")
 	fmt.Println(field.String())
+
+	if err != nil {
+		panic(err)
+	}
 }

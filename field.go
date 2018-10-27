@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"log"
 )
 
 type Field struct {
@@ -28,9 +30,19 @@ func (f *Field) FindSolution() error {
 	for !f.completeController() {
 		curr = f.filled
 
-		f.makePrediction()
+		err := f.makePrediction()
+		if err != nil {
+			return err
+		}
 
-		err := f.trySetValues()
+		err = f.trySetValues()
+		if err != nil {
+			return err
+		} else if curr != f.filled {
+			continue
+		}
+
+		err = f.resolveDoubles()
 		if err != nil {
 			return err
 		} else if curr != f.filled {
@@ -38,6 +50,7 @@ func (f *Field) FindSolution() error {
 		}
 
 		if curr == f.filled {
+			log.Println("The end")
 			break
 		}
 	}
@@ -51,28 +64,45 @@ func (f *Field) FindSolution() error {
 }
 
 func (f *Field) setCellValue(c *Cell, i, j int, value uint8) {
+	fmt.Printf("set [%d, %d] %d\n", i, j, value)
 	c.SetValue(value)
 	f.filled++
 
-	f.forEachMatters(i, j, func(c *Cell, _, _ int) bool {
+	f.forEachMatters(i, j, func(c *Cell, ci, cj int) bool {
 		if !c.Empty() {
 			return true
 		}
 
-		c.EraseFromPrediction(value)
+		p := c.Prediction()
+		p.Erase(value)
+
+		if len(p) != 1 {
+			return true
+		}
+
+		f.setCellValue(c, ci, cj, p.First())
+
 		return true
 	})
 }
 
-func (f *Field) makePrediction() {
+func (f *Field) makePrediction() (err error) {
 	f.forEach(func(c *Cell, i, j int) bool {
 		if !c.Empty() {
 			return true
 		}
 
-		c.SetPrediction(f.predictor(i, j))
+		p := f.predictor(i, j)
+		if len(p) == 0 {
+			err = errors.New("Empty prediction")
+			return false
+		}
+
+		c.SetPrediction(p)
 		return true
 	})
+
+	return err
 }
 
 func (f *Field) trySetValues() (err error) {
@@ -104,7 +134,18 @@ func (f *Field) resolveDoubles() (err error) {
 			return true
 		}
 
-		err = f.minimalist(c, i, j)
+		err = f.minimalist(c, i, j, f.forEachInRow)
+		if err != nil {
+			return false
+		}
+
+		err = f.minimalist(c, i, j, f.forEachInColumn)
+		if err != nil {
+			return false
+		}
+
+		err = f.minimalist(c, i, j, f.forEachInSector)
+		fmt.Println("----------------")
 		return err == nil
 	})
 

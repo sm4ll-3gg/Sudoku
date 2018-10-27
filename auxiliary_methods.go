@@ -20,7 +20,7 @@ func (f *Field) forEach(foo ForEachFunc) (ok bool) {
 	return true
 }
 
-func (f *Field) forEachInRow(i int, foo ForEachFunc) (ok bool) {
+func (f *Field) forEachInRow(i, j int, foo ForEachFunc) (ok bool) {
 	for j := range f.field[i] {
 		ok = foo(&f.field[i][j], i, j)
 		if !ok {
@@ -31,7 +31,7 @@ func (f *Field) forEachInRow(i int, foo ForEachFunc) (ok bool) {
 	return true
 }
 
-func (f *Field) forEachInColumn(j int, foo ForEachFunc) (ok bool) {
+func (f *Field) forEachInColumn(i, j int, foo ForEachFunc) (ok bool) {
 	for i := range f.field {
 		ok = foo(&f.field[i][j], i, j)
 		if !ok {
@@ -59,12 +59,12 @@ func (f *Field) forEachInSector(i, j int, foo ForEachFunc) (ok bool) {
 }
 
 func (f *Field) forEachMatters(i, j int, foo ForEachFunc) (ok bool) {
-	ok = f.forEachInRow(i, foo)
+	ok = f.forEachInRow(i, j, foo)
 	if !ok {
 		return false
 	}
 
-	ok = f.forEachInColumn(j, foo)
+	ok = f.forEachInColumn(i, j, foo)
 	if !ok {
 		return false
 	}

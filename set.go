@@ -33,6 +33,10 @@ func (s Set) Append(value uint8) {
 	s[value] = struct{}{}
 }
 
+func (s Set) Erase(value uint8) {
+	delete(s, value)
+}
+
 func (s Set) Contains(value uint8) bool {
 	_, ok := s[value]
 	return ok
