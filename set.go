@@ -21,8 +21,12 @@ var full = Set{
 
 type Set map[uint8]struct{}
 
-func (s Set) Equal(other Set) bool {
-	return reflect.DeepEqual(s, other)
+func (s Set) First() uint8 {
+	for key := range s {
+		return key
+	}
+
+	return 0
 }
 
 func (s Set) Append(value uint8) {
@@ -40,26 +44,16 @@ func (s Set) Clear() {
 	}
 }
 
-func (s Set) Or(other Set) Set {
-	res := make(Set)
-
-	for val := range s {
-		res.Append(val)
-	}
-
-	for val := range other {
-		res.Append(val)
-	}
-
-	return res
+func (s Set) Equal(other Set) bool {
+	return reflect.DeepEqual(s, other)
 }
 
 func (s Set) Not() Set {
 	res := make(Set)
 
 	for val := range full {
-		if _, ok := s[val]; !ok {
-			res[val] = struct{}{}
+		if !s.Contains(val) {
+			res.Append(val)
 		}
 	}
 

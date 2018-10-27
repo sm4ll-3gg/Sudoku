@@ -1,6 +1,8 @@
 package main
 
-import "errors"
+import (
+	"errors"
+)
 
 type Field struct {
 	field [9][9]Cell
@@ -16,14 +18,15 @@ func (f *Field) Init(data [9][9]uint8) {
 
 func (f *Field) FindSolution() error {
 	f.makePrediction()
-	f.trySetValues()
 
-	if err := f.resolveDoubles(); err != nil {
-		return err
+	for !f.completeController() {
+		err := f.trySetValues()
+		if err != nil {
+			return err
+		}
 	}
 
-	f.findUniquePredictions()
-
+	// f.findUniquePredictions()
 	if !f.controller() {
 		return errors.New(f.String())
 	}
@@ -35,6 +38,10 @@ func (f *Field) setCellValue(c *Cell, i, j int, value uint8) {
 	c.SetValue(value)
 
 	f.forEachMatters(i, j, func(c *Cell, _, _ int) bool {
+		if !c.Empty() {
+			return true
+		}
+
 		c.EraseFromPrediction(value)
 		return true
 	})
@@ -51,23 +58,27 @@ func (f *Field) makePrediction() {
 	})
 }
 
-func (f *Field) trySetValues() {
+func (f *Field) trySetValues() (err error) {
 	f.forEach(func(c *Cell, i, j int) bool {
-		prediction := c.Prediction()
-		if len(prediction) != 1 {
+		if !c.Empty() {
 			return true
 		}
 
-		var value uint8
-		for v := range prediction {
-			value = v
+		prediction := f.predictor(i, j)
+		switch len(prediction) {
+		case 0:
+			err = errors.New("Empty prediction")
+			return false
+		case 1:
+			f.setCellValue(c, i, j, prediction.First())
+		default:
+			c.SetPrediction(prediction)
 		}
-
-		f.setCellValue(c, i, j, value)
-		f.updatePredictions(i, j, value)
 
 		return true
 	})
+
+	return err
 }
 
 func (f *Field) resolveDoubles() (err error) {
@@ -92,38 +103,4 @@ func (f *Field) findUniquePredictions() {
 		f.researcher(c, i, j)
 		return true
 	})
-}
-
-func (f *Field) updatePredictions(i, j int, value uint8) {
-	f.forEachInRow(i, func(c *Cell, i, j int) bool {
-		f.updatePrediction(c, i, j, value)
-		return true
-	})
-
-	f.forEachInColumn(j, func(c *Cell, i, j int) bool {
-		f.updatePrediction(c, i, j, value)
-		return true
-	})
-
-	f.forEachInSector(i, j, func(c *Cell, i, j int) bool {
-		f.updatePrediction(c, i, j, value)
-		return true
-	})
-}
-
-func (f *Field) updatePrediction(c *Cell, i, j int, value uint8) {
-	c.EraseFromPrediction(value)
-
-	prediction := c.Prediction()
-	if len(prediction) != 1 {
-		return
-	}
-
-	var val uint8
-	for v := range prediction {
-		val = v
-	}
-
-	f.setCellValue(c, i, j, val)
-	f.updatePredictions(i, j, val)
 }

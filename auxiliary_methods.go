@@ -97,3 +97,13 @@ func (f Field) String() string {
 
 	return builder.String()
 }
+
+func (f *Field) completeController() bool {
+	return f.forEach(func(c *Cell, _, _ int) bool {
+		if c.Empty() {
+			return false
+		}
+
+		return true
+	})
+}

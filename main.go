@@ -8,7 +8,7 @@ import (
 
 func main() {
 	var field Field
-	field.Init(examples.Medium)
+	field.Init(examples.Simpliest)
 	err := field.FindSolution()
 	if err != nil {
 		panic(err)
