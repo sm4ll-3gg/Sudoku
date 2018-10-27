@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-type ForEachFunc func(c *Cell, i, j int) bool
+type ForCellFunc func(c *Cell, i, j int) bool
 
-func (f *Field) forEach(foo ForEachFunc) (ok bool) {
+func (f *Field) forEach(foo ForCellFunc) (ok bool) {
 	for i := range f.field {
 		for j := range f.field[i] {
 			ok = foo(&f.field[i][j], i, j)
@@ -20,7 +20,9 @@ func (f *Field) forEach(foo ForEachFunc) (ok bool) {
 	return true
 }
 
-func (f *Field) forEachInRow(i, j int, foo ForEachFunc) (ok bool) {
+type ForEachFunc func(i, j int, foo ForCellFunc) bool
+
+func (f *Field) forEachInRow(i, j int, foo ForCellFunc) (ok bool) {
 	for j := range f.field[i] {
 		ok = foo(&f.field[i][j], i, j)
 		if !ok {
@@ -31,7 +33,7 @@ func (f *Field) forEachInRow(i, j int, foo ForEachFunc) (ok bool) {
 	return true
 }
 
-func (f *Field) forEachInColumn(i, j int, foo ForEachFunc) (ok bool) {
+func (f *Field) forEachInColumn(i, j int, foo ForCellFunc) (ok bool) {
 	for i := range f.field {
 		ok = foo(&f.field[i][j], i, j)
 		if !ok {
@@ -42,7 +44,7 @@ func (f *Field) forEachInColumn(i, j int, foo ForEachFunc) (ok bool) {
 	return true
 }
 
-func (f *Field) forEachInSector(i, j int, foo ForEachFunc) (ok bool) {
+func (f *Field) forEachInSector(i, j int, foo ForCellFunc) (ok bool) {
 	si := (i / 3) * 3
 	sj := (j / 3) * 3
 
@@ -58,7 +60,7 @@ func (f *Field) forEachInSector(i, j int, foo ForEachFunc) (ok bool) {
 	return true
 }
 
-func (f *Field) forEachMatters(i, j int, foo ForEachFunc) (ok bool) {
+func (f *Field) forEachMatters(i, j int, foo ForCellFunc) (ok bool) {
 	ok = f.forEachInRow(i, j, foo)
 	if !ok {
 		return false

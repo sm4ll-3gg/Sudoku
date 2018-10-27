@@ -49,13 +49,14 @@ func (f *Field) FindSolution() error {
 			continue
 		}
 
+		f.findUniquePredictions()
+
 		if curr == f.filled {
 			log.Println("The end")
 			break
 		}
 	}
 
-	// f.findUniquePredictions()
 	if !f.controller() {
 		return errors.New(f.String())
 	}
@@ -158,7 +159,9 @@ func (f *Field) findUniquePredictions() {
 			return true
 		}
 
-		f.researcher(c, i, j)
+		f.researcher(c, i, j, f.forEachInRow)
+		f.researcher(c, i, j, f.forEachInColumn)
+		f.researcher(c, i, j, f.forEachInSector)
 		return true
 	})
 }

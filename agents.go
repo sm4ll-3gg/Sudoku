@@ -18,7 +18,7 @@ func (f Field) predictor(i, j int) Set {
 	return has.Not()
 }
 
-func (f *Field) minimalist(c *Cell, i, j int, forEach func(int, int, ForEachFunc) bool) error {
+func (f *Field) minimalist(c *Cell, i, j int, forEach ForEachFunc) error {
 	prediction := c.Prediction()
 
 	hash := func(i, j int) uint8 {
@@ -69,12 +69,12 @@ func (f *Field) minimalist(c *Cell, i, j int, forEach func(int, int, ForEachFunc
 	return nil
 }
 
-func (f *Field) researcher(c *Cell, i, j int) {
+func (f *Field) researcher(c *Cell, i, j int, forEach ForEachFunc) {
 	prediction := c.Prediction()
 
 	counts := make(map[uint8]uint8, len(prediction))
-	f.forEachMatters(i, j, func(c *Cell, ci, cj int) bool {
-		if !c.Empty() || (ci == i && cj == j) {
+	forEach(i, j, func(c *Cell, _, _ int) bool {
+		if !c.Empty() {
 			return true
 		}
 
@@ -85,7 +85,7 @@ func (f *Field) researcher(c *Cell, i, j int) {
 			}
 		}
 
-		return len(counts) < len(prediction)
+		return true
 	})
 
 	for key, count := range counts {
