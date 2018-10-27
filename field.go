@@ -6,23 +6,39 @@ import (
 
 type Field struct {
 	field [9][9]Cell
+
+	filled int
 }
 
 func (f *Field) Init(data [9][9]uint8) {
 	for i, row := range data {
 		for j, value := range row {
 			f.field[i][j] = NewCell(value)
+
+			if value != 0 {
+				f.filled++
+			}
 		}
 	}
 }
 
 func (f *Field) FindSolution() error {
-	f.makePrediction()
+	curr := f.filled
 
 	for !f.completeController() {
+		curr = f.filled
+
+		f.makePrediction()
+
 		err := f.trySetValues()
 		if err != nil {
 			return err
+		} else if curr != f.filled {
+			continue
+		}
+
+		if curr == f.filled {
+			break
 		}
 	}
 
@@ -36,6 +52,7 @@ func (f *Field) FindSolution() error {
 
 func (f *Field) setCellValue(c *Cell, i, j int, value uint8) {
 	c.SetValue(value)
+	f.filled++
 
 	f.forEachMatters(i, j, func(c *Cell, _, _ int) bool {
 		if !c.Empty() {
